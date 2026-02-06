@@ -802,3 +802,19 @@ gpiochip_free_own_desc().
 These functions must be used with care since they do not affect module use
 count. Do not use the functions to request gpio descriptors not owned by the
 calling driver.
+
+
+Configuring GPIO as triggers
+============================
+
+GPIOs as input are used to send external HW events as interrupt to the CPUs, but
+they can also be used to trigger some functionality in other IPs like DMA for block
+of data transfer operations. A GPIO driver can use the below call to setup GPIO as
+triggers::
+
+  void (*set_trigger_config)(struct gpio_chip *gc,
+                             unsigned int offset)
+
+It must be taken care that, if a GPIO is being set using set_trigger_config() there
+shouldn't be any irq connected to it because GIC is not aware of this GPIO setup.
+

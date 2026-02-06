@@ -3019,6 +3019,39 @@ static int gpiochip_set(struct gpio_chip *gc, unsigned int offset, int value)
 	return ret;
 }
 
+/**
+ * gpiod_trigger_config - configure GPIO without IRQ setup
+ * @desc:	GPIO to configure
+ *
+ * Configure the passed GPIO to level/edge trigger mode but without
+ * actually triggering IRQ to CPU. This is useful when GPIO needs to
+ * trigger DMA instead of CPU for example.
+ *
+ * Returns:
+ * 0 on success, or negative errno on failure.
+ */
+int gpiod_trigger_config(struct gpio_desc *desc)
+{
+	VALIDATE_DESC(desc);
+
+	int ret = 0;
+	unsigned offset = gpiod_hwgpio(desc);
+
+	CLASS(gpio_chip_guard, guard)(desc);
+	if (!guard.gc)
+		return -ENODEV;
+
+	if (guard.gc->set_trigger_config) {
+		guard.gc->set_trigger_config(guard.gc, offset);
+	} else {
+		gpiod_warn(desc, "%s: missing set_trigger_config() operation\n", __func__);
+		return -EIO;
+	}
+
+	return ret;
+}
+EXPORT_SYMBOL_GPL(gpiod_trigger_config);
+
 static int gpiod_direction_output_raw_commit(struct gpio_desc *desc, int value)
 {
 	int val = !!value, ret = 0, dir;

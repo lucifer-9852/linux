@@ -468,3 +468,18 @@ considered valid until that GPIO number is released using gpio_free().
 
 Freeing a GPIO obtained by one API with the other API is forbidden and an
 unchecked error.
+
+
+GPIO as input but not mapped to any IRQ
+=======================================
+It is often needed to have an API that can configure a GPIO as input to detect HW
+event but need not raise an interrupt to CPU. But instead the HW event can be routed
+to another IP like DMA. Where this HW event can be used as trigger for the some kind
+of operation like data transfer.
+
+Platforms that support this kind of infrastructure can use the call:
+	int gpiod_trigger_config(struct gpio_desc *desc)
+
+This API first validates the gpio descriptor and following which it calls the platform
+specific set_trigger_config() which if fails, it will return a negative errno code.
+

@@ -436,6 +436,8 @@ struct gpio_chip {
 					      unsigned long config);
 	int			(*to_irq)(struct gpio_chip *gc,
 						unsigned int offset);
+	void			(*set_trigger_config)(struct gpio_chip *gc,
+						   unsigned int offset);
 
 	void			(*dbg_show)(struct seq_file *s,
 						struct gpio_chip *gc);
