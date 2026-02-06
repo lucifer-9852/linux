@@ -26,6 +26,7 @@
 #include <linux/completion.h>
 #include <linux/iopoll.h>
 #include <linux/soc/ti/k3-ringacc.h>
+#include <linux/gpio/consumer.h>
 
 #include "../virt-dma.h"
 #include "k3-udma.h"
@@ -1230,6 +1231,77 @@ static int udma_v2_get_mmrs(struct platform_device *pdev, struct udma_dev *ud)
 	return 0;
 }
 
+static int bcdma_v2_setup_trigger(struct udma_dev *ud)
+{
+	struct device *dev = ud->dev;
+	struct gpio_desc **trigger_gpios;
+	int i, num_triggers;
+	int irq, error;
+
+	/* Parse trigger GPIO array */
+	num_triggers = gpiod_count(dev, "trigger");
+	if (num_triggers > 0) {
+		trigger_gpios = devm_kcalloc(dev, num_triggers,
+							 sizeof(*trigger_gpios), GFP_KERNEL);
+		if (!trigger_gpios)
+			return -ENOMEM;
+
+		for (i = 0; i < num_triggers; i++) {
+			trigger_gpios[i] = devm_gpiod_get_index(dev, "trigger", i, GPIOD_IN);
+			if (IS_ERR(trigger_gpios[i])) {
+				error = PTR_ERR(trigger_gpios[i]);
+				if (error != -ENOENT)
+					return dev_err_probe(dev, error,
+							     "failed to get trigger gpio %d\n", i);
+				trigger_gpios[i] = NULL;
+				continue;
+			}
+
+			/* Configure GPIO as input for trigger reception */
+			error = gpiod_direction_input(trigger_gpios[i]);
+			if (error) {
+				dev_err(dev, "Failed to set trigger GPIO %d as input: %d\n",
+					    i, error);
+				continue;
+			}
+
+			/* Convert GPIO to IRQ number */
+			irq = gpiod_to_irq(trigger_gpios[i]);
+			if (irq < 0) {
+				error = irq;
+				dev_err_probe(dev, error,
+					      "Unable to get irq number for trigger GPIO %d\n", i);
+				continue;
+			}
+
+			/* Set GPIO debounce if supported (like gpio_keys does) */
+			error = gpiod_set_debounce(trigger_gpios[i], 5 * 1000); /* 5ms debounce */
+			if (error < 0) {
+				dev_dbg(dev, "GPIO debounce not supported for trigger %d\n",
+					 i);
+			}
+
+			/* Configure interrupt edge detection */
+			error = irq_set_irq_type(irq, IRQ_TYPE_EDGE_RISING);
+			if (error) {
+				dev_err(dev, "Failed to set IRQ type for trigger %d: %d\n",
+					 i, error);
+				continue;
+			}
+
+			gpio_setup_no_irq(trigger_gpios[i]);
+
+			dev_info(dev, "BCDMA trigger %d mapped to GPIO %d (IRQ %d)\n",
+					i, desc_to_gpio(trigger_gpios[i]), irq);
+		}
+
+		ud->trigger_gpios = trigger_gpios;
+		ud->num_triggers = num_triggers;
+	}
+
+	return 0;
+}
+
 static int udma_v2_probe(struct platform_device *pdev)
 {
 	const struct soc_device_attribute *soc;
@@ -1426,6 +1498,10 @@ static int udma_v2_probe(struct platform_device *pdev)
 		dev_err(dev, "failed to register of_dma controller\n");
 		dma_async_device_unregister(&ud->ddev);
 	}
+
+	/* Setup the trigger GPIOs after the DMA probe is done successfully*/
+	if (ud->match_data->type == DMA_TYPE_BCDMA_V2)
+		bcdma_v2_setup_trigger(ud);
 
 	return ret;
 }

@@ -397,6 +397,9 @@ struct udma_dev {
 	u32 atype;
 	u32 asel;
 
+	struct gpio_desc **trigger_gpios;
+	int num_triggers;
+
 	int (*start)(struct udma_chan *uc);
 	int (*stop)(struct udma_chan *uc);
 	int (*reset_chan)(struct udma_chan *uc, bool hard);
