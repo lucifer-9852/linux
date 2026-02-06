@@ -162,6 +162,21 @@ davinci_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
 	return 0;
 }
 
+/*
+ * Set the rising edge in GPIO, to be used without any IRQ but as DMA
+ * trigger.
+ */
+static void davinci_gpio_set_trigger_config(struct gpio_chip *chip, unsigned offset)
+{
+	struct davinci_gpio_controller *d = gpiochip_get_data(chip);
+	struct davinci_gpio_regs __iomem *g;
+	int bank = offset / 32;
+
+	g = d->regs[bank];
+
+	writel_relaxed(__gpio_mask(offset), &g->set_rising);
+}
+
 static int davinci_gpio_probe(struct platform_device *pdev)
 {
 	int bank, i, ret = 0;
@@ -221,6 +236,7 @@ static int davinci_gpio_probe(struct platform_device *pdev)
 	chips->chip.direction_output = davinci_direction_out;
 	chips->chip.set = davinci_gpio_set;
 	chips->chip.get_direction = davinci_get_direction;
+	chips->chip.set_trigger_config = davinci_gpio_set_trigger_config;
 
 	chips->chip.ngpio = ngpio;
 	chips->chip.base = -1;
