@@ -253,7 +253,7 @@ struct udma_desc *udma_alloc_tr_desc(struct udma_chan *uc,
 	if (uc->cyclic)
 		reload_count = CPPI5_INFO0_TRDESC_RLDCNT_INFINITE;
 
-	if (dir == DMA_DEV_TO_MEM)
+	if (dir == DMA_DEV_TO_MEM && !uc->config.tr_trigger_type)
 		ring_id = k3_ringacc_get_ring_id(uc->rflow->r_ring);
 	else
 		ring_id = k3_ringacc_get_ring_id(uc->tchan->tc_ring);
@@ -507,8 +507,7 @@ udma_prep_slave_sg_triggered_tr(struct udma_chan *uc, struct scatterlist *sgl,
 			      true, CPPI5_TR_EVENT_SIZE_COMPLETION, 0);
 		cppi5_tr_csf_set(&tr_req[tr_idx].flags, csf);
 		cppi5_tr_set_trigger(&tr_req[tr_idx].flags,
-				     uc->config.tr_trigger_type,
-				     CPPI5_TR_TRIGGER_TYPE_ICNT2_DEC, 0, 0);
+			0x3, CPPI5_TR_TRIGGER_TYPE_ICNT2_DEC, 0x0, 0x0);
 
 		sg_addr |= asel;
 		if (dir == DMA_DEV_TO_MEM) {
@@ -553,9 +552,8 @@ udma_prep_slave_sg_triggered_tr(struct udma_chan *uc, struct scatterlist *sgl,
 				      CPPI5_TR_EVENT_SIZE_COMPLETION, 0);
 			cppi5_tr_csf_set(&tr_req[tr_idx].flags, csf);
 			cppi5_tr_set_trigger(&tr_req[tr_idx].flags,
-					     uc->config.tr_trigger_type,
-					     CPPI5_TR_TRIGGER_TYPE_ICNT2_DEC,
-					     0, 0);
+					     0x3, CPPI5_TR_TRIGGER_TYPE_ICNT2_DEC,
+					     0x0, 0x0);
 
 			sg_addr += trigger_size * tr0_cnt2 * tr0_cnt3;
 			if (dir == DMA_DEV_TO_MEM) {

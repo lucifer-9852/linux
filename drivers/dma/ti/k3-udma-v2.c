@@ -391,6 +391,25 @@ out:
 	return IRQ_HANDLED;
 }
 
+static void bcdma_v2_update_trigger_type(struct udma_chan *uc, u32 trigtype)
+{
+	u32 mask = UDMA_CHAN_RT_LOC_TRIG0_TRIGTYPE_MASK <<
+					UDMA_CHAN_RT_LOC_TRIG0_TRIGTYPE_SHIFT;
+	u32 val = (trigtype & UDMA_CHAN_RT_LOC_TRIG0_TRIGTYPE_MASK) <<
+					UDMA_CHAN_RT_LOC_TRIG0_TRIGTYPE_SHIFT;
+
+	udma_bchanrt_update_bits(uc, UDMA_CHAN_RT_LOC_TRIG0_REG, mask, val);
+}
+
+static void bcdma_v2_update_trigger_index(struct udma_chan *uc, u32 index)
+{
+	u32 mask = UDMA_CHAN_RT_LOC_TRIG0_INDEX_MASK;
+	u32 val = (index & UDMA_CHAN_RT_LOC_TRIG0_INDEX_MASK) <<
+					UDMA_CHAN_RT_LOC_TRIG0_INDEX_SHIFT;
+
+	udma_bchanrt_update_bits(uc, UDMA_CHAN_RT_LOC_TRIG0_REG, mask, val);
+}
+
 static int bcdma_v2_get_bchan(struct udma_chan *uc)
 {
 	struct udma_dev *ud = uc->ud;
@@ -418,6 +437,15 @@ static int bcdma_v2_get_bchan(struct udma_chan *uc)
 		uc->bchan = NULL;
 		return ret;
 	}
+
+	/*
+	 * Configure channel trigger index and type in the BCHAN RT registers
+	 */
+	if (uc->config.tr_trigger_type) {
+		bcdma_v2_update_trigger_type(uc, uc->config.tr_trigger_type);
+		bcdma_v2_update_trigger_index(uc, uc->config.trigger_param);
+	}
+
 	uc->chan = uc->bchan;
 	uc->tchan = uc->bchan;
 
@@ -1001,6 +1029,7 @@ static bool udma_v2_dma_filter_fn(struct dma_chan *chan, void *param)
 
 	if (ucc->tr_trigger_type) {
 		ucc->dir = DMA_MEM_TO_MEM;
+		ucc->trigger_param = filter_param->trigger_param;
 		goto triggered_bchan;
 	} else if (ucc->remote_thread_id & K3_PSIL_DST_THREAD_ID_OFFSET) {
 		ucc->dir = DMA_MEM_TO_DEV;

@@ -29,6 +29,8 @@
 #define UDMA_CHAN_RT_CTL_REG		0x0
 #define UDMA_CHAN_RT_CFG_REG		0x4
 #define UDMA_CHAN_RT_SWTRIG_REG		0x8
+#define UDMA_CHAN_RT_LOC_TRIG0_REG		0x10
+#define UDMA_CHAN_RT_LOC_TRIG1_REG		0x14
 #define UDMA_CHAN_RT_STDATA_REG		0x80
 
 #define UDMA_CHAN_RT_STATIC_TR_XY_REG	0x800
@@ -49,6 +51,11 @@
 #define UDMA_CHAN_RT_PCNT_REG		0x400
 #define UDMA_CHAN_RT_BCNT_REG		0x408
 #define UDMA_CHAN_RT_SBCNT_REG		0x410
+
+#define UDMA_CHAN_RT_LOC_TRIG0_TRIGTYPE_MASK		GENMASK(1, 0)
+#define UDMA_CHAN_RT_LOC_TRIG0_TRIGTYPE_SHIFT		(30)
+#define UDMA_CHAN_RT_LOC_TRIG0_INDEX_MASK		GENMASK(15, 0)
+#define UDMA_CHAN_RT_LOC_TRIG0_INDEX_SHIFT		(0)
 
 /* UDMA_CAP Registers */
 #define UDMA_CAP2_TCHAN_CNT(val)	((val) & 0x1ff)
@@ -453,6 +460,7 @@ struct udma_chan_config {
 	bool enable_burst;
 	enum udma_tp_level channel_tpl; /* Channel Throughput Level */
 
+	u32 trigger_param; /* Trigger index for BCDMA DMSS Engine */
 	u32 tr_trigger_type;
 	unsigned long tx_flags;
 
