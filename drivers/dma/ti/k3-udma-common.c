@@ -517,7 +517,7 @@ udma_prep_slave_sg_triggered_tr(struct udma_chan *uc, struct scatterlist *sgl,
 			tr_req[tr_idx].icnt1 = tr_cnt1;
 			tr_req[tr_idx].icnt2 = tr0_cnt2;
 			tr_req[tr_idx].icnt3 = tr0_cnt3;
-			tr_req[tr_idx].dim1 = (-1) * tr_cnt0;
+			tr_req[tr_idx].dim1 = 0;
 
 			tr_req[tr_idx].daddr = sg_addr;
 			tr_req[tr_idx].dicnt0 = tr_cnt0;
@@ -542,7 +542,7 @@ udma_prep_slave_sg_triggered_tr(struct udma_chan *uc, struct scatterlist *sgl,
 			tr_req[tr_idx].dicnt1 = tr_cnt1;
 			tr_req[tr_idx].dicnt2 = tr0_cnt2;
 			tr_req[tr_idx].dicnt3 = tr0_cnt3;
-			tr_req[tr_idx].ddim1 = (-1) * tr_cnt0;
+			tr_req[tr_idx].ddim1 = 0;
 		}
 
 		tr_idx++;
@@ -564,7 +564,7 @@ udma_prep_slave_sg_triggered_tr(struct udma_chan *uc, struct scatterlist *sgl,
 				tr_req[tr_idx].icnt1 = tr_cnt1;
 				tr_req[tr_idx].icnt2 = tr1_cnt2;
 				tr_req[tr_idx].icnt3 = 1;
-				tr_req[tr_idx].dim1 = (-1) * tr_cnt0;
+				tr_req[tr_idx].dim1 = 0;
 
 				tr_req[tr_idx].daddr = sg_addr;
 				tr_req[tr_idx].dicnt0 = tr_cnt0;
@@ -587,7 +587,7 @@ udma_prep_slave_sg_triggered_tr(struct udma_chan *uc, struct scatterlist *sgl,
 				tr_req[tr_idx].dicnt1 = tr_cnt1;
 				tr_req[tr_idx].dicnt2 = tr1_cnt2;
 				tr_req[tr_idx].dicnt3 = 1;
-				tr_req[tr_idx].ddim1 = (-1) * tr_cnt0;
+				tr_req[tr_idx].ddim1 = 0;
 			}
 			tr_idx++;
 		}
