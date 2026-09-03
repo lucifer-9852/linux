@@ -1,0 +1,38 @@
+                         TI K3 Event Mux Router (ti,am62l-event-mux-router)
+                         ===================================================
+
+  EVENT SOURCES                     MMIO REGISTER SPACE                     EVENT SINKS
+  (Inputs)                          Base: 0xa00000, size: 0x400             (Outputs)
+
+  +----------------+               +----------------------------------+
+  |  GPIO Events   |               |   Mux Ctrl [0]                   |       +--------------+
+  |                |               |   reg: base + offset             +-------> BCDMA        |
+  |  GPIO0_xx -----+--+            |   bits selected by mask          |       | Trigger 0    |
+  |  GPIO1_xx -----+--+            +----------------------------------+       +--------------+
+  |  GPIO2_xx -----+--+    +-------> Mux Ctrl [1]                     |
+  |  ...      -----+--+    |       |   reg: base + offset             +-------> +--------------+
+  +----------------+  |    |       |   bits selected by mask          |       | BCDMA        |
+                      |    |       +----------------------------------+       | Trigger 1    |
+  +----------------+  |    |       |   ...                            |       +--------------+
+  |  WKUP GPIO     |  |    |       +----------------------------------+
+  |  Events        |  +----+       |   Mux Ctrl [N]                   |            ...
+  |                |  |    |       |   reg: base + offset             +-------> +--------------+
+  |  GPIO_xxx -----+--+    +------->   bits selected by mask          |       | BCDMA        |
+  |  GPIO_xxx -----+--+            +----------------------------------+       | Trigger N    |
+  |  ...      -----+--+            |                                  |       +--------------+
+  +----------------+               | Each I/P can be mapped to any O/P|
+                                   |                                  |
+                                   |                                  |
+                                   +----------------------------------+
+                                            |  
+                                            |  
+                                            v
+                                +----------------------------------+
+                                | Mapping Register Triplet Format  |
+                                +----------+-------+--------------+
+                                |  offset  | mask  |     val      |
+                                +----------+-------+--------------+
+                                |  0x0040  | 0x0ff |    0x028     |  <- e.g. GPIO0_40 -> BCDMA trig 15
+                                |  ...     | ...   |    ...       |
+                                +----------+-------+--------------+
+                                (ti,reg-mask-val = <offset mask val>)
